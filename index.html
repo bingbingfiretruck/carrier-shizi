@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>小飞机识字 · 每天十个字</title>
+<link rel="stylesheet" href="css/style.css?v=24">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="daychip" id="daychip">周一</div>
+    <div class="tasktitle" id="tasktitle">画一架战斗机</div>
+    <div class="counter" id="counter">0 / 10</div>
+  </div>
+  <div class="segs" id="segs"></div>
+
+  <div class="col-mid">
+    <div class="slab crayon" id="slab">
+      <div class="glyph" id="glyph">水</div>
+      <div class="hint" id="hint">喝水</div>
+      <div class="sentence" id="sentence"></div>
+    </div>
+    <div class="board crayon" id="board">
+      <div class="tip" id="boardtip"></div>
+      <div id="jet"></div>
+    </div>
+    <div id="controls"></div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="col-right">
+    <div class="panel crayon p-tomorrow"><h3>明天来的战斗机</h3>
+      <div id="tomorrow"></div>
+      <div class="tname" id="tomorrowName"></div>
+      <div class="tsub">明天打完卡它就降落</div></div>
+    <div class="panel crayon p-history"><h3>学过的字
+        <span class="hnav"><button id="histPrev">←</button>
+        <b id="histLabel">本周</b><button id="histNext">→</button></span></h3>
+      <div id="history"></div></div>
+    <div class="panel crayon p-rework"><h3>修理站<small id="reworkCount"></small></h3>
+      <div id="rework"></div></div>
+    <div class="panel crayon p-fleet"><h3>我的舰队</h3>
+      <div class="fleet" id="fleet"></div></div>
+  </div>
+
+  <div class="deckwrap crayon" id="deckwrap">
+    <div id="carrier"></div>
+    <div class="decklabels" id="decklabels"></div>
+    <div class="deckbtn" id="deckbtn"></div>
+  </div>
+
+  <div class="settings">
+    <span id="progress"></span><br>
+    <button id="btnExport">导出进度</button>
+    <button id="btnImport">导入进度</button>
+    <button id="btnReset">全部重来</button>
+    <input type="file" id="fileImport" accept="application/json" style="display:none">
+  </div>
+
+</div>
+
+<script src="js/data.js?v=24"></script>
+<script src="js/state.js?v=24"></script>
+<script src="js/lesson.js?v=24"></script>
+<script src="js/scene.js?v=24"></script>
+<script src="js/carrier.js?v=24"></script>
+<script src="js/speech.js?v=24"></script>
+<script src="js/sync.js?v=24"></script>
+<script src="js/ui.js?v=24"></script>
+<script src="js/main.js?v=24"></script>
+</body>
+</html>

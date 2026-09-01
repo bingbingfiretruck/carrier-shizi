@@ -1,0 +1,230 @@
+/* 蜡笔图画板 · 白底彩色卡通 */
+:root{
+  --paper:#FFFFFF;
+  --card:#FFF8EC;
+  --card2:#F4FAFF;
+  --ink:#3E3E3E;
+  --ink2:#7C8288;
+  --ink3:#AAB2B8;
+  --army:#7A9A5B;
+  --army-d:#5A7A42;
+  --sky:#8ED6EF;
+  --sun:#FFD166;
+  --coral:#FF8A80;
+  --mint:#A8E6CF;
+  --grape:#C9B6E4;
+  --peach:#FFBE7B;
+  --rose:#FFAFCC;
+  --aqua:#7FD8D2;
+  --blueberry:#9BB8F0;
+  --line:#3E3E3E;
+  --f-ui:ui-rounded,"PingFang SC","Hiragino Maru Gothic ProN","Yuanti SC",
+        -apple-system,"Microsoft YaHei",sans-serif;
+  --f-han:"Kaiti SC","STKaiti",KaiTi,"TW-Kai","PingFang SC",serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);
+  min-height:100vh;-webkit-user-select:none;user-select:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+svg{display:block;width:100%;height:auto}
+
+.wrap{max-width:480px;margin:0 auto;padding:14px 14px 26px;display:flex;flex-direction:column}
+
+/* 手绘卡片：粗描边 + 不规则圆角 + 硬阴影 */
+.crayon{border:3px solid var(--line);border-radius:26px 20px 28px 22px;
+  box-shadow:0 4px 0 rgba(62,62,62,.18);background:var(--card)}
+
+/* ---------- 顶部 ---------- */
+.topbar{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.daychip{background:var(--sun);border:3px solid var(--line);border-radius:16px 12px 15px 13px;
+  padding:5px 12px;font-weight:800;font-size:14px;box-shadow:0 3px 0 rgba(62,62,62,.18)}
+.daychip.review{background:var(--mint)}
+.tasktitle{font-size:14px;color:var(--ink2);font-weight:700}
+.counter{margin-left:auto;font-weight:900;font-size:16px;color:#E0724E}
+
+.segs{display:flex;gap:4px;margin-bottom:12px}
+.segs i{flex:1;height:18px;background:#F0F3F6;border:3px solid var(--line);
+  border-radius:9px;transition:background .3s}
+
+/* ---------- 字卡 ---------- */
+.slab{padding:16px 14px 14px;text-align:center;margin-bottom:11px;background:var(--card)}
+.glyph{font-family:var(--f-han);font-size:96px;line-height:1.05;color:var(--ink)}
+.hint{margin-top:8px;font-size:19px;font-weight:800;color:var(--army-d)}
+.sentence{margin-top:3px;font-size:14px;color:var(--ink2)}
+.slab.shake{animation:shake .34s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}
+  75%{transform:translateX(8px)}}
+
+/* ---------- 画板 ---------- */
+.board{background:#EAF6FF;padding:6px 8px 2px;margin-bottom:11px;position:relative}
+.board .tip{position:absolute;left:14px;top:10px;font-size:13px;font-weight:800;color:var(--ink2)}
+.jet{max-height:190px}
+.jet .wheel,.carrier .wheel{transform-box:fill-box;transform-origin:center}
+.jet .ghost .wheel{animation:none!important}
+.jet.spin .wheel{animation:roll 1.1s linear infinite}
+@keyframes roll{to{transform:rotate(360deg)}}
+
+/* 降落分段：进场空转 → 触地猛转 → 滑行渐慢 → 停住 */
+.carrier .landing .wheel{animation:roll .9s linear infinite}
+.carrier .landing.approach .wheel{animation:roll .9s linear infinite}
+.carrier .landing.touch .wheel{animation:roll .1s linear infinite}
+.carrier .landing.slowing .wheel{animation:roll .42s linear infinite}
+.carrier .landing.stopped .wheel{animation:none}
+
+/* 触地扬起的烟 */
+.puff circle{transform-box:fill-box;transform-origin:center;
+  animation:puffout 1.2s ease-out forwards}
+@keyframes puffout{0%{transform:scale(.25);opacity:.95}100%{transform:scale(2.3);opacity:0}}
+
+/* 引擎喷火与导弹尾焰：一直在慢慢烧 */
+.eflame{transform-box:fill-box;transform-origin:right center;
+  animation:blast .34s ease-in-out infinite alternate}
+@keyframes blast{from{transform:scaleX(.7)}to{transform:scaleX(1.25)}}
+.mflame{transform-box:fill-box;transform-origin:right center;
+  animation:burn 1.3s ease-in-out infinite alternate}
+@keyframes burn{from{transform:scale(.72);opacity:.7}to{transform:scale(1.08);opacity:1}}
+.ghost .eflame,.ghost .mflame{animation:none}
+.jet .drawn{animation:draw .42s}
+@keyframes draw{0%{opacity:0;transform:scale(.6)}70%{transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
+
+/* ---------- 按钮 ---------- */
+.btn-main{display:block;width:100%;background:var(--sun);color:var(--ink);
+  border:3px solid var(--line);border-radius:22px 18px 24px 20px;padding:15px;
+  font-size:21px;font-weight:900;letter-spacing:1px;box-shadow:0 5px 0 rgba(62,62,62,.22)}
+.btn-main:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(62,62,62,.22)}
+.btn-main[disabled]{opacity:.5}
+.btn-main.listening{background:var(--coral);animation:pulse .9s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.66}}
+.btn-row{display:flex;gap:8px;margin-top:9px}
+.btn-sub{flex:1;background:#E8F6FD;border:3px solid var(--line);border-radius:18px 14px 19px 15px;
+  padding:11px;font-size:15px;font-weight:800;color:var(--ink2);
+  box-shadow:0 3px 0 rgba(62,62,62,.16)}
+.btn-sub.danger{background:#FFEFEE;color:#C7554C}
+.btn-sub:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(62,62,62,.16)}
+.judge{display:flex;gap:9px;margin-top:9px}
+.judge button{flex:1;border:3px solid var(--line);border-radius:20px 16px 21px 17px;
+  padding:14px;font-size:18px;font-weight:900;box-shadow:0 4px 0 rgba(62,62,62,.2)}
+.judge .yes{background:var(--mint)} .judge .no{background:#FFD9D6}
+
+.modebar{margin-top:9px;text-align:center}
+.modebtn{background:var(--grape);border:3px solid var(--line);border-radius:16px;
+  padding:8px 14px;font-size:13px;font-weight:800;color:var(--ink);
+  box-shadow:0 3px 0 rgba(62,62,62,.16)}
+.modebtn.parent{background:var(--peach)}
+.modebtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(62,62,62,.16)}
+.modenote{font-size:12px;color:var(--ink3);margin-top:4px;font-weight:700}
+
+.status{text-align:center;color:var(--ink2);font-size:14px;margin-top:10px;
+  min-height:20px;font-weight:700}
+
+/* ---------- 面板 ---------- */
+.panel{padding:11px 13px 13px;margin-bottom:12px;background:#fff}
+.panel h3{margin:0 0 8px;font-size:14px;font-weight:800;color:var(--ink);
+  display:flex;align-items:center;gap:7px}
+.panel h3::before{content:"";width:12px;height:12px;border-radius:50%;
+  border:2.5px solid var(--line);background:var(--sun);flex:none}
+.p-tomorrow{background:#EDFBF4} .p-tomorrow h3::before{background:var(--mint)}
+.p-rework{background:#FFF1F4}   .p-rework h3::before{background:var(--rose)}
+.p-fleet{background:#F4EFFC}    .p-fleet h3::before{background:var(--grape)}
+.panel h3 small{font-weight:700;color:var(--ink3);font-size:12px;margin-left:5px}
+
+/* ---------- 甲板 ---------- */
+.deckwrap{padding:8px 10px 4px;background:#EFF9FF;margin-bottom:12px}
+.decklabels{position:relative;height:22px;margin-top:2px}
+.decklabels span{position:absolute;transform:translateX(-50%);font-size:13px;font-weight:800;color:var(--ink3)}
+.decklabels span.on{color:var(--army-d)}
+.decklabels span.today{color:var(--coral)}
+
+/* ---------- 学过的字 ---------- */
+.p-history{background:#FFF7E8} .p-history h3::before{background:var(--peach)}
+.hnav{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px}
+.hnav button{border:2.5px solid var(--line);border-radius:9px;background:#fff;
+  width:26px;height:24px;font-weight:900;line-height:1}
+.hnav button:disabled{opacity:.35}
+.hnav b{font-weight:800;color:var(--ink2);min-width:44px;text-align:center}
+.hrow{display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:2px dotted #E4DCCB}
+.hrow:last-child{border-bottom:none}
+.hday{width:26px;height:26px;flex:none;display:flex;align-items:center;justify-content:center;
+  border:2.5px solid var(--line);border-radius:9px;font-size:13px;font-weight:900}
+.hchars{font-family:var(--f-han);font-size:17px;line-height:1.35;flex:1;
+  min-width:0;word-break:break-all;color:var(--ink)}
+.hempty{flex:1;font-size:13px;color:var(--ink3);font-weight:700}
+.hbtn{flex:none;background:var(--aqua);border:2.5px solid var(--line);border-radius:12px;
+  padding:5px 11px;font-size:13px;font-weight:800;box-shadow:0 2px 0 rgba(62,62,62,.18)}
+.hbtn:active{transform:translateY(2px);box-shadow:none}
+.hdoing{flex:none;font-size:12px;font-weight:800;color:var(--ink3);
+  border:2.5px dashed #C8D2D8;border-radius:12px;padding:4px 9px}
+
+/* ---------- 天空 ---------- */
+.tw{animation:twinkle 2.4s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.3}to{opacity:1}}
+.cloud{animation:drift 30s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translateX(-16px)}to{transform:translateX(16px)}}
+.deckwrap.night{background:#152039}
+.deckwrap.night .decklabels span{color:#7D90B4}
+.deckbtn{text-align:center;padding:2px 0 4px;min-height:4px}
+.hbtn.sail{background:var(--peach)}
+
+/* ---------- 修理站 ---------- */
+.bricks{display:flex;gap:7px;flex-wrap:wrap}
+.rgroup{margin-bottom:9px}
+.rgroup:last-child{margin-bottom:0}
+.rday{font-size:12px;font-weight:800;color:var(--ink3);margin-bottom:4px}
+.rb{font-family:var(--f-han);font-size:24px;width:46px;height:46px;display:flex;
+  align-items:center;justify-content:center;background:#FFD9E2;
+  border:3px solid var(--line);border-radius:15px 12px 16px 13px;
+  box-shadow:0 3px 0 rgba(62,62,62,.16)}
+.rb.fixed{background:#C9EFD5;position:relative}
+.rb.fixed::after{content:"✓";position:absolute;right:-3px;top:-6px;font-size:15px;
+  color:#2E8B57;font-weight:900}
+.empty{color:var(--ink3);font-size:14px;font-weight:700}
+
+/* ---------- 明天预告 ---------- */
+.p-tomorrow .jet{max-height:104px}
+.tname{text-align:center;font-size:14px;font-weight:800;color:var(--army-d);margin-top:2px}
+.tsub{text-align:center;font-size:12px;color:var(--ink3);margin-top:2px}
+
+/* ---------- 舰队 ---------- */
+.fleet{display:flex;gap:7px;flex-wrap:wrap}
+.ship{background:#E4F1FB;border:3px solid var(--line);border-radius:15px 12px 16px 13px;
+  padding:6px 10px;font-size:13px;font-weight:800;color:var(--army-d)}
+.ship.full{background:var(--sun)}
+
+/* ---------- 出厂庆祝 ---------- */
+.celebrate{position:fixed;inset:0;background:rgba(255,255,255,.93);display:flex;
+  align-items:center;justify-content:center;padding:18px;z-index:50}
+.cbox{background:var(--card);border:4px solid var(--line);border-radius:30px 24px 32px 26px;
+  padding:22px 20px;text-align:center;max-width:380px;width:100%;
+  box-shadow:0 6px 0 rgba(62,62,62,.22)}
+.cbox .big{font-size:25px;font-weight:900;color:var(--army-d);margin-bottom:4px}
+.cbox .sub{font-size:15px;color:var(--ink2);line-height:1.7;margin:8px 0 14px;font-weight:700}
+.cbox .fly{overflow:hidden}
+.cbox .fly .jet{animation:flyby 1.5s ease-out}
+@keyframes flyby{0%{transform:translateX(-70%)}100%{transform:translateX(0)}}
+
+/* ---------- 设置 ---------- */
+.settings{margin-top:10px;text-align:center;color:var(--ink3);font-size:12px}
+.settings button{color:var(--ink3);font-size:12px;text-decoration:underline;padding:6px}
+
+/* ---------- 电脑横屏 ---------- */
+@media (min-width:900px){
+  .wrap{max-width:1060px;display:grid;
+    grid-template-columns:minmax(0,1fr) 300px;
+    grid-template-areas:"bar bar" "haz haz" "mid right" "deck deck" "set set";
+    gap:0 18px;padding:22px}
+  .topbar{grid-area:bar} .segs{grid-area:haz}
+  .col-mid{grid-area:mid} .col-right{grid-area:right}
+  .deckwrap{grid-area:deck;max-width:780px;margin-left:auto;margin-right:auto;width:100%}
+  .settings{grid-area:set}
+  .glyph{font-size:128px}
+  .jet{max-height:210px}
+}
+@media (max-width:899px){
+  .col-mid,.col-right{display:contents}
+  .topbar{order:1} .segs{order:2} .slab{order:3} .board{order:4}
+  #controls{order:5} .status{order:6} .deckwrap{order:7}
+  .p-tomorrow{order:8} .p-history{order:9} .p-rework{order:10}
+  .p-fleet{order:11} .settings{order:12}
+}
