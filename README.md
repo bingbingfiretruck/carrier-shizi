@@ -1,11 +1,18 @@
-# 小飞机识字 · 每天十个字
+# 航母工地 · 每天十个字
+
+**在线使用：** https://GITHUB_USER.github.io/carrier-shizi/
+
+手机、平板、电脑打开就能用，不用装任何东西。把网址发给别人，他们打开就是全新的进度 ——
+**每个人的学习记录只存在自己的浏览器里**，互不干扰，也不会上传到任何地方。
+
+> 语音判定用的是浏览器自带的识别功能。安卓 Chrome、电脑 Chrome/Edge 支持最好；
+> iPhone 上 Safari 支持不稳定，识别不出来时点按钮切到「妈妈判定」即可，两个大按钮一样能用。
 
 500 高频字识字应用，蜡笔图画板风格。周一到周五每天 10 个新字，周六周日复习，念错的进修理站。
 
 ## 怎么跑
 
 ```
-cd "/Users/hema/claude code/航母工地"
 python3 -m http.server 8899
 ```
 
@@ -147,7 +154,6 @@ python3 -m http.server 8899
 ## 跑测试
 
 ```
-cd "/Users/hema/claude code/航母工地"
 node test/logic-test.js
 node test/speech-test.js
 ```
