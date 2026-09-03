@@ -65,7 +65,7 @@ function taskTitle(l){
   var round = l.rounds || 1;
   if(round > 1) return "再巩固一遍 · 第 " + round + " 遍";
   if(l.mode === "review") return allCharsLearned() ? "全部学完 · 复习" : "复习日 · 把不会的修好";
-  return "画一架战斗机";
+  return "第 " + dayNumber() + " 天 · 画一架战斗机";
 }
 
 /* ---------- 字卡 ---------- */
@@ -763,7 +763,17 @@ function renderExceptDeck(){
     state.jets + " 架 · 舰队 " + state.fleet.length + " 艘";
 }
 
+function renderStorageWarning(){
+  var box = el("warn");
+  if(!box) return;
+  var bad = !storageWorks() || storageBroken;
+  box.style.display = bad ? "" : "none";
+  if(bad) box.textContent = "这个浏览器不让保存进度，关掉网页学过的就没了。" +
+    "换个浏览器，或者关掉无痕/隐私模式再打开。";
+}
+
 function renderAll(){
+  renderStorageWarning();
   renderExceptDeck();
   renderDeck();
 }

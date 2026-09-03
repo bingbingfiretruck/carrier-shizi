@@ -69,7 +69,10 @@ function shuffle(a){
 /* 取（或首次生成）今天这一课 */
 function todayLesson(){
   var key = todayKey();
-  if(!state.days[key]) state.days[key] = newLesson();
+  if(!state.days[key]){
+    state.days[key] = newLesson();
+    saveState();          // 立刻落盘：刷新页面不会重新抽一组字，也不会白烧字库
+  }
   return state.days[key];
 }
 
@@ -107,6 +110,9 @@ function lessonStars(l){
 }
 
 function allCharsLearned(){ return masteredCount() >= CHARS.length; }
+
+/* 今天是第几个学习日：按字库已经发到哪儿算 */
+function dayNumber(){ return Math.max(1, Math.ceil(state.cursor / PER_DAY)); }
 
 function currentChar(){
   var l = todayLesson();

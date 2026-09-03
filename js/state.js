@@ -30,9 +30,26 @@ function loadState(){
   return emptyState();
 }
 
+var storageBroken = false;
+
 function saveState(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    storageBroken = false;
+  }catch(e){
+    storageBroken = true;   // 浏览器不让存（无痕模式/存储被禁），界面要提示，不能默默吞掉
+  }
   if(typeof onStateSaved === "function") onStateSaved();
+}
+
+/* 开机自检：真的能存能读吗 */
+function storageWorks(){
+  try{
+    localStorage.setItem("__t", "1");
+    var ok = localStorage.getItem("__t") === "1";
+    localStorage.removeItem("__t");
+    return ok;
+  }catch(e){ return false; }
 }
 
 function resetState(){

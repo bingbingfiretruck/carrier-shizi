@@ -48,6 +48,40 @@ ok("甲板停了 1 架", deckCount() === 1, deckCount());
 ok("已学会 10 字", masteredCount() === 10, masteredCount());
 ok("游标推进到 10", state.cursor === 10, state.cursor);
 
+console.log("\n【同一天反复打开，字不能变】");
+(function(){
+  const key = todayKey();
+  const first = todayLesson().chars.join("");
+  const cur = state.cursor;
+  const saved = JSON.parse(localStorage.getItem(LS_KEY));
+  ok("当天课程立刻存进了浏览器", !!(saved && saved.days && saved.days[key]), Object.keys(saved.days || {}).join(","));
+  ok("存下来的字跟屏幕上一致", saved.days[key].chars.join("") === first);
+  global.state = loadState();                       // 模拟关掉网页再打开
+  ok("重新打开还是同一组字", todayLesson().chars.join("") === first, todayLesson().chars.join(""));
+  ok("游标没有被白白烧掉", state.cursor === cur, state.cursor + " vs " + cur);
+})();
+
+console.log("\n【连续几天，字必须不一样】");
+(function(){
+  const snapshot = localStorage.getItem(LS_KEY);     // 这一段会消耗字库，跑完要还原
+  const seen = [];
+  ["2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-07"].forEach(d => {
+    const realKey = global.todayKey, realWd = global.weekday, realWe = global.isWeekend;
+    global.todayKey = () => d;
+    global.weekday = () => { const x = new Date(d + "T00:00:00").getDay(); return x === 0 ? 7 : x; };
+    global.isWeekend = () => weekday() >= 6;
+    global.state = loadState();
+    seen.push(todayLesson().chars.join(""));
+    global.todayKey = realKey; global.weekday = realWd; global.isWeekend = realWe;
+  });
+  ok("五个工作日发了五组不同的字", new Set(seen).size === 5, seen.join(" / "));
+  ok("每组都是十个字", seen.every(s => s.length === 10));
+  ok("组与组之间没有重复的字",
+    new Set(seen.join("")).size === 50, new Set(seen.join("")).size);
+  localStorage.setItem(LS_KEY, snapshot);
+  global.state = loadState();                        // 还原现场，不影响后面的用例
+})();
+
 console.log("\n【周二：连错两次进修理站，队尾复现】");
 setDay(2);
 l = todayLesson();

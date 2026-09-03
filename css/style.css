@@ -35,6 +35,10 @@ svg{display:block;width:100%;height:auto}
 .crayon{border:3px solid var(--line);border-radius:26px 20px 28px 22px;
   box-shadow:0 4px 0 rgba(62,62,62,.18);background:var(--card)}
 
+/* ---------- 存不了进度时的警告条 ---------- */
+.warn{background:#FFE0E0;border:3px solid var(--line);border-radius:14px;
+  padding:9px 12px;margin-bottom:10px;font-size:13px;font-weight:800;color:#B4392E}
+
 /* ---------- 顶部 ---------- */
 .topbar{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .daychip{background:var(--sun);border:3px solid var(--line);border-radius:16px 12px 15px 13px;
@@ -212,8 +216,9 @@ svg{display:block;width:100%;height:auto}
 @media (min-width:900px){
   .wrap{max-width:1060px;display:grid;
     grid-template-columns:minmax(0,1fr) 300px;
-    grid-template-areas:"bar bar" "haz haz" "mid right" "deck deck" "set set";
+    grid-template-areas:"warn warn" "bar bar" "haz haz" "mid right" "deck deck" "set set";
     gap:0 18px;padding:22px}
+  .warn{grid-area:warn}
   .topbar{grid-area:bar} .segs{grid-area:haz}
   .col-mid{grid-area:mid} .col-right{grid-area:right}
   .deckwrap{grid-area:deck;max-width:780px;margin-left:auto;margin-right:auto;width:100%}
@@ -223,7 +228,7 @@ svg{display:block;width:100%;height:auto}
 }
 @media (max-width:899px){
   .col-mid,.col-right{display:contents}
-  .topbar{order:1} .segs{order:2} .slab{order:3} .board{order:4}
+  .warn{order:0} .topbar{order:1} .segs{order:2} .slab{order:3} .board{order:4}
   #controls{order:5} .status{order:6} .deckwrap{order:7}
   .p-tomorrow{order:8} .p-history{order:9} .p-rework{order:10}
   .p-fleet{order:11} .settings{order:12}
