@@ -59,13 +59,21 @@ function renderSegs(p){
   }
 }
 
+/* 今天这十个字在字库里的位置，比如「第 3 组 · 21–30 字」 */
+function bankPosition(l){
+  if(l.mode !== "new" || !l.chars.length) return "";
+  var first = CHARS.indexOf(l.chars[0]) + 1, last = CHARS.indexOf(l.chars[l.chars.length - 1]) + 1;
+  if(first < 1) return "";
+  return " · 第 " + Math.ceil(first / 10) + " 组 " + first + "–" + last + " 字";
+}
+
 function taskTitle(l){
   if(dayReview) return "复习" + dayReview.label + "学的字";
   if(practice) return "修理站";
   var round = l.rounds || 1;
   if(round > 1) return "再巩固一遍 · 第 " + round + " 遍";
   if(l.mode === "review") return allCharsLearned() ? "全部学完 · 复习" : "复习日 · 把不会的修好";
-  return "第 " + dayNumber() + " 天 · 画一架战斗机";
+  return "第 " + dayNumber() + " 天 · 画一架战斗机" + bankPosition(l);
 }
 
 /* ---------- 字卡 ---------- */
