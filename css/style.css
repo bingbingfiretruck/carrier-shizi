@@ -39,6 +39,10 @@ svg{display:block;width:100%;height:auto}
 .warn{background:#FFE0E0;border:3px solid var(--line);border-radius:14px;
   padding:9px 12px;margin-bottom:10px;font-size:13px;font-weight:800;color:#B4392E}
 
+/* ---------- 存储失效警告 ---------- */
+.warn{background:#FFE3E0;border-color:#C7554C;color:#8A2E27;padding:10px 13px;margin-bottom:12px;
+  font-size:14px;font-weight:800;line-height:1.6}
+
 /* ---------- 顶部 ---------- */
 .topbar{display:flex;align-items:center;gap:9px;margin-bottom:11px}
 .daychip{background:var(--sun);border:3px solid var(--line);border-radius:16px 12px 15px 13px;

@@ -13,6 +13,7 @@ function emptyState(){
     weekCounts: {},   // "2026-W35" -> 该周停了几架
     lastWeek: "",     // 上次打开时所在的周，用来判断航母该出航了
     judge: "",        // "" 自动 / "voice" 自己念 / "parent" 妈妈判定
+    savedAt: 0,       // 上次保存时间，两份备份里挑新的
     fleet: []         // 已出航的航母 [{week, count, full}]
   };
 }
@@ -33,13 +34,57 @@ function loadState(){
 var storageBroken = false;
 
 function saveState(){
-  try{
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-    storageBroken = false;
-  }catch(e){
-    storageBroken = true;   // 浏览器不让存（无痕模式/存储被禁），界面要提示，不能默默吞掉
-  }
+  state.savedAt = new Date().getTime();
+  var json = JSON.stringify(state);
+  try{ localStorage.setItem(LS_KEY, json); storageBroken = false; }
+  catch(e){ storageBroken = true; }     // 浏览器不让存（无痕/禁 Cookie），界面要大声提示
+  idbSave(json);
   if(typeof onStateSaved === "function") onStateSaved();
+}
+
+/* 探测这个浏览器到底存不存得住东西 */
+function storageWorks(){
+  try{ localStorage.setItem("__" + LS_KEY, "1"); localStorage.removeItem("__" + LS_KEY); return true; }
+  catch(e){ return false; }
+}
+
+/* ---------- 第二份备份：IndexedDB ----------
+   有些浏览器清 localStorage 不清 IndexedDB，两边都存，谁新用谁 */
+var IDB_STORE = "kv";
+function idbOpen(cb){
+  try{
+    var req = indexedDB.open(LS_KEY + "_db", 1);
+    req.onupgradeneeded = function(){ req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = function(){ cb(req.result); };
+    req.onerror = function(){ cb(null); };
+  }catch(e){ cb(null); }
+}
+function idbSave(json){
+  idbOpen(function(db){
+    if(!db) return;
+    try{ db.transaction(IDB_STORE, "readwrite").objectStore(IDB_STORE).put(json, LS_KEY); }catch(e){}
+  });
+}
+function idbLoad(cb){
+  idbOpen(function(db){
+    if(!db) return cb(null);
+    try{
+      var r = db.transaction(IDB_STORE).objectStore(IDB_STORE).get(LS_KEY);
+      r.onsuccess = function(){ cb(r.result || null); };
+      r.onerror = function(){ cb(null); };
+    }catch(e){ cb(null); }
+  });
+}
+
+/* 启动时看备份里有没有更新的记录，有就用备份 */
+function restoreFromBackup(cb){
+  idbLoad(function(json){
+    try{
+      var s = json ? JSON.parse(json) : null;
+      if(s && s.v === 2 && (s.savedAt || 0) > (state.savedAt || 0)) state = s;
+    }catch(e){}
+    cb();
+  });
 }
 
 /* 开机自检：真的能存能读吗 */
@@ -101,6 +146,17 @@ function weekKey(){
   var jan1 = new Date(d.getFullYear(), 0, 1);
   var w = Math.ceil(((d - jan1) / 86400000 + 1) / 7);
   return d.getFullYear() + "-W" + String(w).padStart(2,"0");
+}
+
+/* 开学日（固定），今天是开学第几个上学日就学第几组字。
+   跟存储无关，所以就算浏览器把记录清了，明天也绝不会再是同样十个字。 */
+var EPOCH = new Date(2026, 8, 7);            // 2026-09-07 周一
+function schoolDayIndex(key){
+  var p = (key || todayKey()).split("-");
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  var days = Math.round((d - EPOCH) / 86400000);
+  if(days < 0) days = 0;
+  return Math.floor(days / 7) * 5 + Math.min(days % 7, 4);   // 周六日不往前走
 }
 
 /* 本周一到周五各自的日期 key */

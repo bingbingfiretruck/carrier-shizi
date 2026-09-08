@@ -768,7 +768,8 @@ function renderExceptDeck(){
   renderTomorrow();
   renderHistory();
   el("progress").textContent = masteredCount() + " / " + CHARS.length + " 字 · 出厂 " +
-    state.jets + " 架 · 舰队 " + state.fleet.length + " 艘";
+    state.jets + " 架 · 舰队 " + state.fleet.length + " 艘" +
+    (state.savedAt ? " · 上次保存 " + fmtTime(state.savedAt) : "");
 }
 
 function renderStorageWarning(){
@@ -780,7 +781,23 @@ function renderStorageWarning(){
     "换个浏览器，或者关掉无痕/隐私模式再打开。";
 }
 
+/* 浏览器存不住东西时必须大声说，不然家长第二天才发现记录没了 */
+function renderStorageWarning(){
+  var box = el("warn");
+  var bad = storageBroken || !storageWorks();
+  box.hidden = !bad;
+  if(bad) box.textContent = "⚠️ 这个浏览器存不住学习记录（可能是无痕模式、禁了 Cookie，或者在微信里打开）。" +
+    "请用 Safari 或 Chrome 打开这个网址，再「添加到主屏幕」，不然明天记录会没。";
+}
+
+function fmtTime(ms){
+  var d = new Date(ms);
+  return (d.getMonth() + 1) + "/" + d.getDate() + " " + d.getHours() + ":" +
+         String(d.getMinutes()).padStart(2, "0");
+}
+
 function renderAll(){
+  renderStorageWarning();
   renderStorageWarning();
   renderExceptDeck();
   renderDeck();

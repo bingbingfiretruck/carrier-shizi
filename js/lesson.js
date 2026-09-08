@@ -1,16 +1,15 @@
 /* 选字与判定：这一层是纯逻辑，不碰 DOM */
 var PER_DAY = 10;
 
-/* 周一到周五：从字库游标往下取未学会的新字 */
+/* 今天该学第几组：按开学日往后数，跟存储无关 */
+function todayGroup(){
+  return schoolDayIndex(todayKey()) % Math.ceil(CHARS.length / PER_DAY);
+}
+
+/* 周一到周五：直接取今天这一组的十个字 */
 function pickNewChars(n){
-  var out = [];
-  var i = state.cursor;
-  while(i < CHARS.length && out.length < n){
-    var c = CHARS[i];
-    if(!state.mastered[c]) out.push(c);
-    i++;
-  }
-  return out;
+  var g = todayGroup();
+  return CHARS.slice(g * n, g * n + n);
 }
 
 /* 周末：修理站优先 → 曾错过的（权重×3）→ 已学字随机补齐 */
@@ -82,7 +81,7 @@ function newLesson(){
   var chars = review ? pickReviewChars(PER_DAY) : pickNewChars(PER_DAY);
   if(!chars.length && review){ chars = pickNewChars(PER_DAY); review = false; }
   if(!chars.length){ chars = pickReviewChars(PER_DAY); review = true; }
-  if(!review && chars.length) state.cursor = CHARS.indexOf(chars[chars.length - 1]) + 1;
+  if(!review && chars.length) state.cursor = Math.max(state.cursor || 0, CHARS.indexOf(chars[chars.length - 1]) + 1);
   var l = { mode: review ? "review" : "new", chars: chars, done: [], log: [],
             queue: chars.slice(), miss: {}, plane: null, rounds: 1, jetNo: 0 };
   saveState();
@@ -112,7 +111,7 @@ function lessonStars(l){
 function allCharsLearned(){ return masteredCount() >= CHARS.length; }
 
 /* 今天是第几个学习日：按字库已经发到哪儿算 */
-function dayNumber(){ return Math.max(1, Math.ceil(state.cursor / PER_DAY)); }
+function dayNumber(){ return todayGroup() + 1; }
 
 function currentChar(){
   var l = todayLesson();

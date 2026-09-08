@@ -29,6 +29,5 @@
     document.removeEventListener("click", once);
   });
 
-  syncWeek();
-  renderAll();
+  restoreFromBackup(function(){ syncWeek(); renderAll(); });
 })();

@@ -4,7 +4,8 @@ const fs = require("fs"), vm = require("vm"), path = require("path");
 const D = path.join(__dirname, "..");
 
 const store = {};
-global.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => (store[k] = v) };
+global.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => (store[k] = v),
+                        removeItem: k => { delete store[k]; } };
 global.location = { search: "" };
 global.window = {};
 
@@ -13,8 +14,8 @@ global.window = {};
 });
 
 /* 用固定的一周（2026-08-24 周一）替换真实日期 */
-const MONDAY = new Date("2026-08-24T00:00:00");
-let FAKE = "2026-08-24", FAKEDOW = 1, WEEK = "2026-W35", WEEK_START = 24;
+const MONDAY = new Date("2026-09-07T00:00:00");   // 开学日
+let FAKE = "2026-09-07", FAKEDOW = 1, WEEK = "2026-W37", WEEK_START = 7;
 global.todayKey = () => FAKE;
 global.weekday = () => FAKEDOW;
 global.isWeekend = () => FAKEDOW >= 6;
@@ -28,8 +29,8 @@ const setDay = dow => {
   FAKEDOW = dow;
   const d = new Date(MONDAY); d.setDate(WEEK_START + dow - 1); FAKE = dateKey(d);
 };
-const nextWeek = () => { WEEK = "2026-W36"; WEEK_START = 31; };
-const thisWeek = () => { WEEK = "2026-W35"; WEEK_START = 24; };
+const nextWeek = () => { WEEK = "2026-W38"; WEEK_START = 14; };
+const thisWeek = () => { WEEK = "2026-W37"; WEEK_START = 7; };
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra = "") =>
@@ -65,7 +66,7 @@ console.log("\n【连续几天，字必须不一样】");
 (function(){
   const snapshot = localStorage.getItem(LS_KEY);     // 这一段会消耗字库，跑完要还原
   const seen = [];
-  ["2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-07"].forEach(d => {
+  ["2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11"].forEach(d => {
     const realKey = global.todayKey, realWd = global.weekday, realWe = global.isWeekend;
     global.todayKey = () => d;
     global.weekday = () => { const x = new Date(d + "T00:00:00").getDay(); return x === 0 ? 7 : x; };
@@ -149,7 +150,7 @@ console.log("\n【修理站：只进不出，周一清空】");
     const r = pickReviewChars(10);
     return r.indexOf(a) >= 0 && r.indexOf(b) >= 0;
   })());
-  thisWeek(); state.lastWeek = "2026-W35";
+  thisWeek(); state.lastWeek = "2026-W37";
   nextWeek(); syncWeek();
   ok("跨到新的一周，修理站原样保留", !!state.wrongBook[a] && !!state.wrongBook[b]);
   ok("已修好的字也还在", state.wrongBook[b].fixed === true);
@@ -208,7 +209,7 @@ console.log("\n【满编出航与舰队】");
 setDay(6); finishDay();
 setDay(7); finishDay();
 ok("七天全打卡 = 满编", deckFull() && deckCount() === 7, deckCount());
-ok("本周记了 7 架", state.weekCounts["2026-W35"] === 7, state.weekCounts["2026-W35"]);
+ok("本周记了 7 架", state.weekCounts["2026-W37"] === 7, state.weekCounts["2026-W37"]);
 nextWeek(); syncWeek();
 ok("跨周后上一艘进舰队", state.fleet.length === 1, state.fleet.length);
 ok("并且标记为满编", state.fleet[0].full === true && state.fleet[0].count === 7);
@@ -287,7 +288,7 @@ console.log("\n【周末从零开始的兜底】");
   const l = todayLesson();
   ok("周日第一次打开也发十个字", l.chars.length === 10, l.chars.length);
   ok("没东西可复习时退回学新字", l.mode === "new", l.mode);
-  ok("发的是字库开头的新字", l.chars[0] === "的", l.chars[0]);
+  ok("发的是按日历算出来的那组（周日=本周五那组）", l.chars[0] === pickNewChars(10)[0], l.chars[0]);
   state.mastered = keep.m; state.days = keep.d; state.cursor = keep.c; state.wrongBook = keep.w;
 })();
 
@@ -297,7 +298,7 @@ console.log("\n【字库学完后的兜底】");
   state.mastered = {}; CHARS.forEach(c => (state.mastered[c] = { d: "x", n: 1 }));
   state.cursor = CHARS.length; state.days = {}; setDay(2);
   ok("全部学完后不发空课", todayLesson().chars.length === 10, todayLesson().chars.length);
-  ok("自动转成复习模式", todayLesson().mode === "review", todayLesson().mode);
+  ok("全部学完后按日历循环，照样发今天这组新字", todayLesson().mode === "new", todayLesson().mode);
   ok("allCharsLearned 为真", allCharsLearned() === true);
   state.mastered = keep.m; state.days = keep.d; state.cursor = keep.c;
 })();
@@ -336,6 +337,30 @@ ok("念错也不会污染今天的进度", todayLesson().done.length === before)
 markRightLoose(monChars[1]);
 ok("再念对也不出库，只是标成已修好",
   !!state.wrongBook[monChars[1]] && state.wrongBook[monChars[1]].fixed === true);
+
+console.log("\n【按日历发字：存储丢了也不会天天一样】");
+(function(){
+  const keep = { d: state.days, m: state.mastered, c: state.cursor };
+  const at = (key) => { const p = key.split("-"); const w = new Date(+p[0], +p[1]-1, +p[2]).getDay();
+    global.todayKey = () => key; global.weekday = () => (w === 0 ? 7 : w); global.isWeekend = () => weekday() >= 6; };
+  const fresh = () => { state.days = {}; state.mastered = {}; state.cursor = 0; };   // 模拟浏览器把记录清空
+  at("2026-09-08"); fresh(); const tueA = todayLesson().chars.join("");
+  at("2026-09-08"); fresh(); const tueB = todayLesson().chars.join("");
+  ok("同一天，哪怕记录被清空，发的还是同一组", tueA === tueB, tueA + " vs " + tueB);
+  at("2026-09-09"); fresh(); const wed = todayLesson().chars.join("");
+  ok("记录被清空，第二天照样换一组", wed !== tueA, wed);
+  ok("周二是第 2 组，周三是第 3 组", tueA === CHARS.slice(10,20).join("") && wed === CHARS.slice(20,30).join(""));
+  ok("周六周日不往前走（都算第 5 组）",
+     schoolDayIndex("2026-09-12") === 4 && schoolDayIndex("2026-09-13") === 4 && schoolDayIndex("2026-09-14") === 5);
+  ok("第 51 个上学日回到第 1 组（循环）", (schoolDayIndex("2026-11-16") % 50) === 0, schoolDayIndex("2026-11-16"));
+  ok("开学日之前打开也不会报错，按第 1 组算", schoolDayIndex("2026-01-01") === 0);
+  at("2026-09-07"); global.isWeekend = () => false;
+  state.days = keep.d; state.mastered = keep.m; state.cursor = keep.c;
+})();
+
+console.log("\n【存储探测】");
+ok("能存的时候 storageWorks 为真", storageWorks() === true);
+ok("保存会盖时间戳", (function(){ saveState(); return typeof state.savedAt === "number" && state.savedAt > 0; })());
 
 console.log("\n【一轮里每个字只出现一次】");
 state.days = {}; state.wrongBook = {}; setDay(3);
