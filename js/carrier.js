@@ -28,7 +28,11 @@ function deckJets(){
 }
 
 /* 今天在甲板上的位次 0..6 */
-function todayDeckIndex(){ return weekday() - 1; }
+/* 当前在学的那天在本周甲板上的位次 0..6（补打卡/提前学时跟着切） */
+function todayDeckIndex(){
+  var i = weekKeys().indexOf(activeKey());
+  return i >= 0 ? i : weekday() - 1;
+}
 function deckCount(){
   return deckSlots().filter(Boolean).length;
 }

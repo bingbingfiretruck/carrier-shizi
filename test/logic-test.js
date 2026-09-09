@@ -358,6 +358,38 @@ console.log("\n【按日历发字：存储丢了也不会天天一样】");
   state.days = keep.d; state.mastered = keep.m; state.cursor = keep.c;
 })();
 
+console.log("\n【补打卡 / 提前学：任意一天都能学】");
+(function(){
+  const keep = { d: state.days, m: state.mastered, c: state.cursor, wc: state.weekCounts, j: state.jets };
+  state.days = {}; state.weekCounts = {}; state.jets = 0;
+  const week = ["2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-12","2026-09-13"];
+  global.todayKey = () => "2026-09-09"; global.weekday = () => 3; global.isWeekend = () => false;
+  global.weekKeys = () => week; global.weekdayKeys = () => week.slice(0,5); global.weekKey = () => "2026-W37";
+  ok("周一到周五每天的字都能提前算出来",
+     week.slice(0,5).every((k,i) => charsForDate(k).join("") === CHARS.slice(i*10, i*10+10).join("")));
+  ok("周末算不出固定的字（周末是复习）", charsForDate("2026-09-12") === null);
+  setActiveDay("2026-09-07");                                  // 补周一
+  ok("切到周一后，学的是周一那组", todayLesson().chars.join("") === CHARS.slice(0,10).join(""));
+  ok("甲板位次也切到周一", todayDeckIndex() === 0, todayDeckIndex());
+  ok("补打卡还没做完，周一位上没飞机", stampedOn("2026-09-07") === false);
+  while(todayLesson().queue.length) markRight(todayLesson().queue[0]);
+  ok("补完了，周一位上有飞机了", stampedOn("2026-09-07") === true);
+  ok("补打卡算进本周架数", state.weekCounts["2026-W37"] === 1);
+  setActiveDay("2026-09-11");                                  // 提前学周五
+  ok("切到周五后，学的是周五那组", todayLesson().chars.join("") === CHARS.slice(40,50).join(""));
+  ok("甲板位次切到周五", todayDeckIndex() === 4, todayDeckIndex());
+  while(todayLesson().queue.length) markRight(todayLesson().queue[0]);
+  ok("提前学完，周五位上有飞机", stampedOn("2026-09-11") === true);
+  ok("今天（周三）还没学，位上没飞机", stampedOn("2026-09-09") === false);
+  setActiveDay(null);
+  ok("回到今天后学的是周三那组", todayLesson().chars.join("") === CHARS.slice(20,30).join(""));
+  ok("回到今天后甲板位次是周三", todayDeckIndex() === 2);
+  ok("传今天进去等于回到今天", (setActiveDay("2026-09-09"), activeDay === null));
+  global.todayKey = () => "2026-09-07"; global.weekday = () => 1;
+  global.weekKeys = () => days(7); global.weekdayKeys = () => days(5);
+  state.days = keep.d; state.mastered = keep.m; state.cursor = keep.c; state.weekCounts = keep.wc; state.jets = keep.j;
+})();
+
 console.log("\n【存储探测】");
 ok("能存的时候 storageWorks 为真", storageWorks() === true);
 ok("保存会盖时间戳", (function(){ saveState(); return typeof state.savedAt === "number" && state.savedAt > 0; })());

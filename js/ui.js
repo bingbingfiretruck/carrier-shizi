@@ -33,9 +33,10 @@ var SEG_COLORS = ["#FF8A80","#FFA46B","#FFD166","#D8E064","#A8E6CF",
 
 function renderTop(){
   var chip = el("daychip");
-  chip.textContent = DAY_NAMES[weekday() - 1];
+  var wd = weekdayOf(activeKey());
+  chip.textContent = DAY_NAMES[wd - 1] + (activeDay ? (activeKey() < todayKey() ? " 补" : " 提前") : "");
   chip.className = "daychip";
-  chip.style.background = DAY_COLORS[weekday() - 1];
+  chip.style.background = DAY_COLORS[wd - 1];
   el("tasktitle").textContent = taskTitle(todayLesson());
   var p = sessionProgress();
   el("counter").textContent = p.done + " / " + p.total;
@@ -73,7 +74,8 @@ function taskTitle(l){
   var round = l.rounds || 1;
   if(round > 1) return "再巩固一遍 · 第 " + round + " 遍";
   if(l.mode === "review") return allCharsLearned() ? "全部学完 · 复习" : "复习日 · 把不会的修好";
-  return "第 " + dayNumber() + " 天 · 画一架战斗机" + bankPosition(l);
+  var pre = activeDay ? (activeKey() < todayKey() ? "补打卡 · " : "提前学 · ") : "";
+  return pre + "第 " + dayNumber() + " 天 · 画一架战斗机" + bankPosition(l);
 }
 
 /* ---------- 字卡 ---------- */
@@ -135,6 +137,7 @@ function renderControls(){
   else renderParentControls(box);
   box.appendChild(modeToggle());
   if(dayReview) box.appendChild(subButton("先不复习了，回到今天", exitDayReview));
+  else if(activeDay) box.appendChild(subButton("回到今天", backToToday));
 }
 
 function modeToggle(){
@@ -363,6 +366,7 @@ function renderDone(){
   if(wrongList().length){
     box.appendChild(subButton("去修理站（" + wrongList().length + "）", startPractice));
   }
+  if(activeDay) box.appendChild(subButton("回到今天", backToToday));
   practice = null;
   setStatus("");
 }
@@ -570,7 +574,7 @@ function finishSail(){
 /* ---------- 甲板 ---------- */
 function renderDeck(landing, jetOverride){
   var flying = typeof landing === "number" && landing >= 0;
-  var jets = deckJets(), today = weekday();
+  var jets = deckJets(), today = todayDeckIndex() + 1;
   if(flying && jetOverride) jets[landing] = jetOverride;
   el("carrier").innerHTML = carrierSVG(jets, today, flying ? landing : -1);
   el("deckwrap").className = "deckwrap crayon" + (isNight() ? " night" : "");
@@ -691,23 +695,55 @@ function historyRow(key, i){
   var row = document.createElement("div");
   row.className = "hrow";
   row.appendChild(dayTag(i));
-  if(!d || !d.chars.length){
+  var chars = (d && d.chars.length) ? d.chars : (histOffset === 0 ? charsForDate(key) : null);
+  if(!chars){
     var e = document.createElement("span");
     e.className = "hempty";
-    e.textContent = "还没学";
+    e.textContent = i >= 5 ? "周末复习" : "还没学";
     row.appendChild(e);
     return row;
   }
-  row.appendChild(charsCell(d));
-  row.appendChild(d.plane ? reviewButton(key, i) : doingTag());
+  row.appendChild(charsCell(d || { chars: chars }));
+  row.appendChild(historyAction(key, i, d));
   return row;
 }
 
-function doingTag(){
+/* 每一行右边的按钮：学习中 / 复习 / 补打卡 / 提前学 */
+function historyAction(key, i, d){
+  if(key === activeKey() && (!d || !d.plane)) return doingTag();
+  if(d && d.plane) return reviewButton(key, i);
+  if(histOffset !== 0 || i >= 5) return doingTag("没打卡");
+  var past = key < todayKey();
+  var b = document.createElement("button");
+  b.className = "hbtn " + (past ? "makeup" : "ahead");
+  b.textContent = past ? "补打卡" : "提前学";
+  b.onclick = function(){ startMakeup(key); };
+  return b;
+}
+
+function doingTag(text){
   var t = document.createElement("span");
   t.className = "hdoing";
-  t.textContent = "学习中";
+  t.textContent = text || "学习中";
   return t;
+}
+
+/* 切到别的日子去学：补昨天前天的，或者提前学后面几天的 */
+function startMakeup(key){
+  setActiveDay(key);
+  dayReview = null;
+  practice = null;
+  taughtCard = "";
+  renderAll();
+  try{ el("slab").scrollIntoView({ behavior:"smooth", block:"center" }); }catch(e){}
+}
+
+function backToToday(){
+  setActiveDay(null);
+  dayReview = null;
+  practice = null;
+  taughtCard = "";
+  renderAll();
 }
 
 function dayTag(i){
@@ -722,7 +758,7 @@ function charsCell(d){
   var cs = document.createElement("span");
   cs.className = "hchars";
   cs.textContent = d.chars.join(" ");
-  var stars = lessonStars(d);
+  var stars = d.queue ? lessonStars(d) : 0;
   if(stars) cs.textContent += "  " + new Array(stars + 1).join("★");
   return cs;
 }

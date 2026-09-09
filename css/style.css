@@ -162,6 +162,8 @@ svg{display:block;width:100%;height:auto}
 .hbtn{flex:none;background:var(--aqua);border:2.5px solid var(--line);border-radius:12px;
   padding:5px 11px;font-size:13px;font-weight:800;box-shadow:0 2px 0 rgba(62,62,62,.18)}
 .hbtn:active{transform:translateY(2px);box-shadow:none}
+.hbtn.makeup{background:var(--peach)}
+.hbtn.ahead{background:var(--blueberry)}
 .hdoing{flex:none;font-size:12px;font-weight:800;color:var(--ink3);
   border:2.5px dashed #C8D2D8;border-radius:12px;padding:4px 9px}
 

@@ -2,26 +2,53 @@
 var PER_DAY = 10;
 
 /* 今天该学第几组：按开学日往后数，跟存储无关 */
-function todayGroup(){
-  return schoolDayIndex(todayKey()) % Math.ceil(CHARS.length / PER_DAY);
+/* 当前在学哪一天：默认今天；补打卡/提前学时切到别的日子 */
+var activeDay = null;
+function activeKey(){ return activeDay || todayKey(); }
+function setActiveDay(key){ activeDay = (key && key !== todayKey()) ? key : null; }
+
+function weekdayOf(key){
+  var p = key.split("-");
+  var w = new Date(+p[0], +p[1] - 1, +p[2]).getDay();
+  return w === 0 ? 7 : w;
 }
 
-/* 周一到周五：直接取今天这一组的十个字 */
-function pickNewChars(n){
-  var g = todayGroup();
-  return CHARS.slice(g * n, g * n + n);
+/* 某一天该学第几组：按开学日往后数 */
+function groupFor(key){ return schoolDayIndex(key) % Math.ceil(CHARS.length / PER_DAY); }
+function todayGroup(){ return groupFor(activeKey()); }
+
+/* 某一天（周一到周五）那十个字，周末返回 null（周末是复习，字要临时抽） */
+function charsForDate(key){
+  if(weekdayOf(key) >= 6) return null;
+  var g = groupFor(key);
+  return CHARS.slice(g * PER_DAY, g * PER_DAY + PER_DAY);
 }
 
-/* 周末：修理站优先 → 曾错过的（权重×3）→ 已学字随机补齐 */
-function pickReviewChars(n){
-  var out = pickFromWrongBook(n);
-  if(out.length >= n) return out.slice(0, n);
-  var pool = buildWeightedPool(out);
-  shuffle(pool);
-  for(var i=0;i<pool.length && out.length<n;i++){
-    if(out.indexOf(pool[i]) < 0) out.push(pool[i]);
+function todayLesson(){
+  var key = activeKey();
+  if(!state.days[key]){
+    state.days[key] = newLesson(key);
+    saveState();          // 立刻落盘：刷新页面不会重新抽一组字
   }
-  return out;
+  return state.days[key];
+}
+
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function buildWeightedPool(exclude){
+  var pool = [];
+  Object.keys(state.mastered).forEach(function(c){
+    if(exclude.indexOf(c) >= 0) return;
+    var times = state.everWrong[c] ? 3 : 1;
+    for(var k=0;k<times;k++) pool.push(c);
+  });
+  return pool;
 }
 
 /* 从修理站挑 n 个：还没念对过的排前面，已修好的随机轮换。
@@ -47,38 +74,28 @@ function wrongBookByDay(){
   });
 }
 
-function buildWeightedPool(exclude){
-  var pool = [];
-  Object.keys(state.mastered).forEach(function(c){
-    if(exclude.indexOf(c) >= 0) return;
-    var times = state.everWrong[c] ? 3 : 1;
-    for(var k=0;k<times;k++) pool.push(c);
-  });
-  return pool;
-}
-
-function shuffle(a){
-  for(var i=a.length-1;i>0;i--){
-    var j = Math.floor(Math.random()*(i+1));
-    var t = a[i]; a[i] = a[j]; a[j] = t;
+/* 周末：修理站优先 → 曾错过的（权重×3）→ 已学字随机补齐 */
+function pickReviewChars(n){
+  var out = pickFromWrongBook(n);
+  if(out.length >= n) return out.slice(0, n);
+  var pool = buildWeightedPool(out);
+  shuffle(pool);
+  for(var i=0;i<pool.length && out.length<n;i++){
+    if(out.indexOf(pool[i]) < 0) out.push(pool[i]);
   }
-  return a;
+  return out;
 }
 
-/* 取（或首次生成）今天这一课 */
-function todayLesson(){
-  var key = todayKey();
-  if(!state.days[key]){
-    state.days[key] = newLesson();
-    saveState();          // 立刻落盘：刷新页面不会重新抽一组字，也不会白烧字库
-  }
-  return state.days[key];
+/* 周一到周五：直接取今天这一组的十个字 */
+function pickNewChars(n){
+  var g = todayGroup();
+  return CHARS.slice(g * n, g * n + n);
 }
 
-/* 平日发新字，周末发复习字；哪边空了就退到另一边，保证永远有十个字可学 */
-function newLesson(){
-  var review = isWeekend();
-  var chars = review ? pickReviewChars(PER_DAY) : pickNewChars(PER_DAY);
+function newLesson(key){
+  key = key || activeKey();
+  var review = weekdayOf(key) >= 6;
+  var chars = review ? pickReviewChars(PER_DAY) : (charsForDate(key) || []);
   if(!chars.length && review){ chars = pickNewChars(PER_DAY); review = false; }
   if(!chars.length){ chars = pickReviewChars(PER_DAY); review = true; }
   if(!review && chars.length) state.cursor = Math.max(state.cursor || 0, CHARS.indexOf(chars[chars.length - 1]) + 1);
